@@ -200,3 +200,7 @@ def import_csv(csv_file):
 
 if __name__ == "__main__":
     cli()
+
+
+
+print('jjdnedjne')
