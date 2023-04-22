@@ -112,67 +112,11 @@ def init_db_connection(choice_db):
     return db
 
 
-# def connect_to_db() -> None:
-#     """Function open connect to database Expenses, there are all expenses."""
-#     try:
-#         mydb = mysql.connector.connect(
-#                 host=os.environ.get('host'),
-#                 user=os.environ.get('user'),
-#                 password=os.environ.get('password_to_mysql'),
-#                 database=os.environ.get('database')
-#             )
-#     except mysql.connector.errors.ProgrammingError:
-#         print('Database not exist.')
-#         sys.exit(1)
-#     return mydb
-
-
-# def save_to_db(new_expense: Expense) -> None:
-#     '''Function save to database new object Expenses with new expense.'''
-#     try:
-#         mydb = connect_to_db()
-#     except mysql.connector.errors.ProgrammingError:
-#         create_new_db()
-#         mydb = connect_to_db()
-
-#     mycursor = mydb.cursor()
-#     sql = "INSERT INTO list_expenses (id, amount, description) VALUES (%s, %s, %s)"
-#     val = (new_expense.id, new_expense.amount, new_expense.description)
-#     mycursor.execute(sql, val)
-#     mydb.commit()
-
-
 def read_db(db, query) -> list[Expense]:
     """Function return list with expenses from database."""
     contents_db = db.select_from_db(query)
     current_expenses = [Expense(element[0], element[1], element[2]) for element in contents_db]
     return current_expenses
-
-
-# def create_new_expense(amount: float, description: str) -> Expense:
-#     """Function create list with expensive objects. First do Expense object from amount and description. Next function use function read_db to acess current expensive and assigne new object to list. 
-#        Arguments: amount, description.
-#     """
-#     try:
-#         new_expense = Expense(search_next_id(), float(amount), description)
-#     except ValueError:
-#         print(r"The amount exept's must be larger than 0")
-#         sys.exit(1)
-#     return new_expense
-
-
-# def delete_expense(id: int) -> None:
-#     """Function delete record in database with given ID."""
-#     try:
-#         mydb = connect_to_db()
-#     except mysql.connector.errors.ProgrammingError:
-#         create_new_db()
-#         mydb = connect_to_db()
-#     mycursor = mydb.cursor()
-#     sql = "DELETE FROM list_expenses WHERE id = %s"
-#     id_ = (int(id), )
-#     mycursor.execute(sql, id_)
-#     mydb.commit()
 
 
 def print_raport(db, query) -> None:
@@ -262,7 +206,6 @@ def raport(db_type):
 def python_export(db_type):
     # print_list()
     ...
-
 
 @cli.command() #import csv
 @click.argument('db_type')
