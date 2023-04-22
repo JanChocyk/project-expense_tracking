@@ -12,7 +12,8 @@ FILENAME = 'expenses.db'
 QUERY_SELECT = 'SELECT * FROM list_expenses'
 QUERY_INSERT = 'INSERT INTO list_expenses (amount, description) VALUES (%s, %s)'
 QUERY_INSERT_SQLITE = 'INSERT INTO list_expenses (amount, description) VALUES (?, ?)'
-QUERY_DELETE = 'DELETE FROM list_expenses WHERE id = %s'
+QUERY_DELETE_MYSQL = 'DELETE FROM list_expenses WHERE id = %s'
+QUERY_DELETE_SQLITE = 'DELETE FROM list_expenses WHERE id = ?'
 QUERY_CREATE_DB = 'CREATE DATABASE expenses'
 QUERY_CREATE_TABLE_MYSQL = 'CREATE TABLE list_expenses (id INT AUTO_INCREMENT, amount DECIMAL(10,2), description VARCHAR(200), PRIMARY KEY (id))'
 QUERY_CREATE_TABLE_SQLITE = 'CREATE TABLE IF NOT EXISTS list_expenses (id INTEGER PRIMARY KEY , amount REAL, description TEXT)'
@@ -198,7 +199,10 @@ def import_data_from_csv(db: MySQLConnector or SQLiteConnector, csv_file: str, q
         with open(csv_file) as stream:
             reader = csv.DictReader(stream)
             for row in reader:
-                Expense.save_to_db(db, row['amount'], row['description'], query)
+                try:
+                    Expense.save_to_db(db, row['amount'], row['description'], query)
+                except ValueError:
+                    print(f"Don't correct or misscing amount or description: {row['amount']} and {row['description']}.")
     else:
         print('File is not exist.')
         raise FileNotFoundError
@@ -237,10 +241,14 @@ def add(db_type, amount, description):
 @click.argument('db_type')
 @click.argument('id', type=int)
 
-def delete(id, db_type):
+def delete(db_type, id):
     db = init_db_connection(db_type)
-    # delete_expense(id)
-
+    if type(db) == MySQLConnector:
+        query = QUERY_DELETE_MYSQL
+    else:
+        query = QUERY_DELETE_SQLITE
+    db.delete_from_db(query, [int(id)])
+    print(f'The record with id {id} has been deleted.')
 
 @cli.command() #raport
 @click.argument('db_type')
