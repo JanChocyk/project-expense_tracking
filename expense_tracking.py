@@ -17,9 +17,20 @@ QUERY_DELETE_SQLITE = 'DELETE FROM list_expenses WHERE id = ?'
 QUERY_CREATE_DB = 'CREATE DATABASE expenses'
 QUERY_CREATE_TABLE_MYSQL = 'CREATE TABLE list_expenses (id INT AUTO_INCREMENT, amount DECIMAL(10,2), description VARCHAR(200), PRIMARY KEY (id))'
 QUERY_CREATE_TABLE_SQLITE = 'CREATE TABLE IF NOT EXISTS list_expenses (id INTEGER PRIMARY KEY , amount REAL, description TEXT)'
+QUERY_DROP_DATABASE_MYSQL = 'DROP DATABASE '
 
 
 class MySQLConnector:
+    """
+    A class represent connection with database.
+    ...
+    Atributes
+    -------------
+    connection = mysql.connector.connection.MySQLConnection
+        Create connection with database.
+    mycursor = mysql.connector.cursor.MySQLCursor
+        Create cursor object.
+    """
     def __init__(self):
         self.connection = mysql.connector.connect(
                 host=os.environ.get('host'),
@@ -29,17 +40,15 @@ class MySQLConnector:
             )
         self.mycursor = self.connection.cursor()
 
-    def select_from_db(self, query):
-        self.mycursor.execute(query)
+    def execute_on_cursor(self, query, val=[]):
+        self.mycursor.execute(query, val)
+        if val != []:
+            self.connection.commit()
         return self.mycursor.fetchall()
     
-    def insert_to_db(self, query, val):
-        self.mycursor.execute(query, val)
-        self.connection.commit()
-
-    def delete_from_db(self, query, val):
-        self.mycursor.execute(query, val)
-        self.connection.commit()
+    def drop_database(self, query, val):
+        query = query + val
+        self.mycursor.execute(query)
 
     @classmethod
     def create_table(cls, query):
@@ -58,24 +67,24 @@ class MySQLConnector:
 
 
 class SQLiteConnector:
+    """
+    A class represent connection with database.
+    ...
+    Atributes
+    -------------
+    connection = sqlite3.Connection
+        Create connection with database.
+    mycursor = sqlite3.Cursor
+        Create cursor object.
+    """
     def __init__(self):
         self.connection = sqlite3.connect(FILENAME)
         self.mycursor = self.connection.cursor()
 
-    def select_from_db(self, query):
-        self.mycursor.execute(query)
-        return self.mycursor.fetchall()
-    
-    def insert_to_db(self, query, val):
+    def execute_on_cursor(self, query, val=[]):
         self.mycursor.execute(query, val)
         self.connection.commit()
-
-    def delete_from_db(self, query, val):
-        self.mycursor.execute(query, val)
-        self.connection.commit() 
-    
-    def create_table(self, query):
-        self.mycursor.execute(query)
+        return self.mycursor.fetchall()
 
 
 @dataclass
@@ -96,25 +105,42 @@ class Expense:
     @classmethod
     def save_to_db(cls, db, amount, description, query):
         expense = cls(id, float(amount), description)
-        return db.insert_to_db(query, (expense.amount, expense.description))
+        return db.execute_on_cursor(query, (expense.amount, expense.description))
 
 
-def init_db_connection(choice_db):
+def init_db_connection(choice_db: str):
+    """
+    Returns object class MySQLConnector or object class SQLiteConnector.
+
+    Parameters:
+        choice_db = str
+    Return: 
+        db = MySQLConnector or SQLiteConnector
+    """
     if 'sqlite' in choice_db:
         db = SQLiteConnector()
-        db.create_table(QUERY_CREATE_TABLE_SQLITE)
+        db.execute_on_cursor(QUERY_CREATE_TABLE_SQLITE)
     else:
         try: 
             db = MySQLConnector()
         except mysql.connector.errors.ProgrammingError:
             MySQLConnector.create_database(QUERY_CREATE_DB)
-            db = MySQLConnector.create_table(QUERY_CREATE_TABLE_MYSQL)
+            MySQLConnector.create_table(QUERY_CREATE_TABLE_MYSQL)
+            db = MySQLConnector()
     return db
 
 
 def read_db(db, query) -> list[Expense]:
-    """Function return list with expenses from database."""
-    contents_db = db.select_from_db(query)
+    """
+    Return list with expenses from database.
+    Parametres:
+        db = MySQLConnector or SQLiteConnector
+        query = str
+        It is SQL statment.
+    Return:
+        current_expenses = list[Expense]
+    """
+    contents_db = db.execute_on_cursor(query)
     current_expenses = [Expense(element[0], element[1], element[2]) for element in contents_db]
     return current_expenses
 
@@ -152,11 +178,11 @@ def import_data_from_csv(db: MySQLConnector or SQLiteConnector, csv_file: str, q
         raise FileNotFoundError
 
 
-# def print_list() -> None:
-#     """Function print list with current expenses."""
-#     current_expenses = read_db()
-#     expenses_object_list = [expense.__repr__() for expense in current_expenses]
-#     print(expenses_object_list)
+def print_list(db, query: str) -> None:
+    """Function print list with current expenses."""
+    current_expenses = read_db(db, query)
+    expenses_object_list = [expense.__repr__() for expense in current_expenses]
+    print(expenses_object_list)
 
 
 @click.group()
@@ -191,7 +217,7 @@ def delete(db_type, id):
         query = QUERY_DELETE_MYSQL
     else:
         query = QUERY_DELETE_SQLITE
-    db.delete_from_db(query, [int(id)])
+    db.execute_on_cursor(query, [int(id)])
     print(f'The record with id {id} has been deleted.')
 
 @cli.command() #raport
@@ -204,8 +230,9 @@ def raport(db_type):
 @cli.command() #python_export
 @click.argument('db_type')
 def python_export(db_type):
-    # print_list()
-    ...
+    db = init_db_connection(db_type)
+    print_list(db, QUERY_SELECT)
+
 
 @cli.command() #import csv
 @click.argument('db_type')
@@ -219,6 +246,19 @@ def import_csv(db_type, csv_file):
         query = QUERY_INSERT_SQLITE
     import_data_from_csv(db, csv_file, query)
     
+
+@cli.command() #drop_database
+@click.argument('db_type')
+
+def drop_database(db_type):
+    db = init_db_connection(db_type)
+    if type(db) == MySQLConnector:
+        val = os.environ.get("database")
+        db.drop_database(QUERY_DROP_DATABASE_MYSQL, val)
+    else:
+        db.connection.close()
+        os.remove(FILENAME)
+
 
 if __name__ == "__main__":
     cli()
