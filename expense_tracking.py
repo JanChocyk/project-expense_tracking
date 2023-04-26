@@ -7,20 +7,33 @@ import click
 import mysql.connector
 import sqlite3
 
-
+HOST = os.environ.get('host')
+USER = os.environ.get('user')
+PASSWORD = os.environ.get('password_to_db')
+DATABASE = os.environ.get('database')
 FILENAME = 'expenses.db'
 QUERY_SELECT = 'SELECT * FROM list_expenses'
 QUERY_INSERT = 'INSERT INTO list_expenses (amount, description) VALUES (%s, %s)'
-QUERY_INSERT_SQLITE = 'INSERT INTO list_expenses (amount, description) VALUES (?, ?)'
-QUERY_DELETE_MYSQL = 'DELETE FROM list_expenses WHERE id = %s'
-QUERY_DELETE_SQLITE = 'DELETE FROM list_expenses WHERE id = ?'
+QUERY_DELETE = 'DELETE FROM list_expenses WHERE id = %s'
 QUERY_CREATE_DB = 'CREATE DATABASE expenses'
 QUERY_CREATE_TABLE_MYSQL = 'CREATE TABLE list_expenses (id INT AUTO_INCREMENT, amount DECIMAL(10,2), description VARCHAR(200), PRIMARY KEY (id))'
 QUERY_CREATE_TABLE_SQLITE = 'CREATE TABLE IF NOT EXISTS list_expenses (id INTEGER PRIMARY KEY , amount REAL, description TEXT)'
 QUERY_DROP_DATABASE_MYSQL = 'DROP DATABASE '
 
 
-class MySQLConnector:
+class Connector:
+    def execute_on_cursor(self, query, val=None):
+        if val is None:
+            val = []
+        if type(self.connection) == sqlite3.Connection:
+            query = query.replace("%s", "?")
+        self.mycursor.execute(query, val)
+        if val != []:
+            self.connection.commit()
+        return self.mycursor.fetchall()
+
+
+class MySQLConnector(Connector):
     """
     A class represent connection with database.
     ...
@@ -31,42 +44,36 @@ class MySQLConnector:
     mycursor = mysql.connector.cursor.MySQLCursor
         Create cursor object.
     """
-    def __init__(self):
+    def __init__(self, host, user, password, database):
         self.connection = mysql.connector.connect(
-                host=os.environ.get('host'),
-                user=os.environ.get('user'),
-                password=os.environ.get('password_to_db'),
-                database=os.environ.get('database')
+                host=host,
+                user=user,
+                password=password,
+                database=database
             )
         self.mycursor = self.connection.cursor()
 
-    def execute_on_cursor(self, query, val=[]):
-        self.mycursor.execute(query, val)
-        if val != []:
-            self.connection.commit()
-        return self.mycursor.fetchall()
-    
     def drop_database(self, query, val):
         query = query + val
         self.mycursor.execute(query)
 
     @classmethod
     def create_table(cls, query):
-        db = cls()
+        db = cls(HOST, USER, PASSWORD, DATABASE)
         db.mycursor.execute(query)
         return db
     
     @classmethod
-    def create_database(cls, query):
+    def create_database(cls, query, host, user, password):
         connection = mysql.connector.connect(
-                host=os.environ.get('host'),
-                user=os.environ.get('user'),
-                password=os.environ.get('password_to_db'))
+                host=host,
+                user=user,
+                password=password)
         mycursor = connection.cursor()
         mycursor.execute(query)
 
 
-class SQLiteConnector:
+class SQLiteConnector(Connector):
     """
     A class represent connection with database.
     ...
@@ -80,11 +87,6 @@ class SQLiteConnector:
     def __init__(self):
         self.connection = sqlite3.connect(FILENAME)
         self.mycursor = self.connection.cursor()
-
-    def execute_on_cursor(self, query, val=[]):
-        self.mycursor.execute(query, val)
-        self.connection.commit()
-        return self.mycursor.fetchall()
 
 
 @dataclass
@@ -103,12 +105,12 @@ class Expense:
         return f"Expense(id={self.id}, amount={self.amount}, description={self.description!r})"
     
     @classmethod
-    def save_to_db(cls, db, amount, description, query):
-        expense = cls(id, float(amount), description)
-        return db.execute_on_cursor(query, (expense.amount, expense.description))
+    def save_to_db(cls, db, amount, description):
+        expense = cls(None, float(amount), description)
+        return db.execute_on_cursor(QUERY_INSERT, (expense.amount, expense.description))
 
 
-def init_db_connection(choice_db: str):
+def init_db_connection(choice_db: str) -> Connector:
     """
     Returns object class MySQLConnector or object class SQLiteConnector.
 
@@ -117,20 +119,20 @@ def init_db_connection(choice_db: str):
     Return: 
         db = MySQLConnector or SQLiteConnector
     """
-    if 'sqlite' in choice_db:
+    if 'sqlite' == choice_db:
         db = SQLiteConnector()
         db.execute_on_cursor(QUERY_CREATE_TABLE_SQLITE)
     else:
         try: 
-            db = MySQLConnector()
+            db = MySQLConnector(HOST, USER, PASSWORD, DATABASE)
         except mysql.connector.errors.ProgrammingError:
-            MySQLConnector.create_database(QUERY_CREATE_DB)
+            MySQLConnector.create_database(QUERY_CREATE_DB, HOST, USER, PASSWORD)
             MySQLConnector.create_table(QUERY_CREATE_TABLE_MYSQL)
-            db = MySQLConnector()
+            db = MySQLConnector(HOST, USER, PASSWORD, DATABASE)
     return db
 
 
-def read_db(db, query) -> list[Expense]:
+def read_db(db: Connector) -> list[Expense]:
     """
     Return list with expenses from database.
     Parametres:
@@ -140,14 +142,14 @@ def read_db(db, query) -> list[Expense]:
     Return:
         current_expenses = list[Expense]
     """
-    contents_db = db.execute_on_cursor(query)
+    contents_db = db.execute_on_cursor(QUERY_SELECT)
     current_expenses = [Expense(element[0], element[1], element[2]) for element in contents_db]
     return current_expenses
 
 
-def print_raport(db, query) -> None:
+def print_raport(db: Connector) -> None:
     """The function displays a report with all current expenses and total sum."""
-    current_expenses = read_db(db, query)
+    current_expenses = read_db(db)
     total = 0
     print(f'-ID--AMOUNT--BIG?--------DESCRIPTION-------')
     for expense in current_expenses:
@@ -161,7 +163,7 @@ def print_raport(db, query) -> None:
 
 
 # czy taka adnotacja typów z or może być?
-def import_data_from_csv(db: MySQLConnector or SQLiteConnector, csv_file: str, query: str) -> None:
+def import_data_from_csv(db: Connector, csv_file: str) -> None:
     """Function read file CSV with expenses and save each expense to database.
        File CSV must be two column: AMOUNT, DESCRIPTION.
     """
@@ -170,7 +172,7 @@ def import_data_from_csv(db: MySQLConnector or SQLiteConnector, csv_file: str, q
             reader = csv.DictReader(stream)
             for row in reader:
                 try:
-                    Expense.save_to_db(db, row['amount'], row['description'], query)
+                    Expense.save_to_db(db, row['amount'], row['description'])
                 except ValueError:
                     print(f"Don't correct or misscing amount or description: {row['amount']} and {row['description']}.")
     else:
@@ -178,9 +180,9 @@ def import_data_from_csv(db: MySQLConnector or SQLiteConnector, csv_file: str, q
         raise FileNotFoundError
 
 
-def print_list(db, query: str) -> None:
+def print_list(db: Connector) -> None:
     """Function print list with current expenses."""
-    current_expenses = read_db(db, query)
+    current_expenses = read_db(db)
     expenses_object_list = [expense.__repr__() for expense in current_expenses]
     print(expenses_object_list)
 
@@ -196,12 +198,8 @@ def cli():
 
 def add(db_type, amount, description):
     db = init_db_connection(db_type)
-    if type(db) == MySQLConnector:
-        query = QUERY_INSERT
-    else:
-        query = QUERY_INSERT_SQLITE
     try:
-        Expense.save_to_db(db, amount, description, query)
+        Expense.save_to_db(db, amount, description)
     except ValueError:
         print("Don't correct or misscing amount or description.")
         sys.exit(1)
@@ -213,25 +211,21 @@ def add(db_type, amount, description):
 
 def delete(db_type, id):
     db = init_db_connection(db_type)
-    if type(db) == MySQLConnector:
-        query = QUERY_DELETE_MYSQL
-    else:
-        query = QUERY_DELETE_SQLITE
-    db.execute_on_cursor(query, [int(id)])
+    db.execute_on_cursor(QUERY_DELETE, [int(id)])
     print(f'The record with id {id} has been deleted.')
 
 @cli.command() #raport
 @click.argument('db_type')
 def raport(db_type):
     db = init_db_connection(db_type)
-    print_raport(db, QUERY_SELECT)
+    print_raport(db)
 
 
 @cli.command() #python_export
 @click.argument('db_type')
 def python_export(db_type):
     db = init_db_connection(db_type)
-    print_list(db, QUERY_SELECT)
+    print_list(db)
 
 
 @cli.command() #import csv
@@ -240,11 +234,7 @@ def python_export(db_type):
 
 def import_csv(db_type, csv_file):
     db = init_db_connection(db_type)
-    if type(db) == MySQLConnector:
-        query = QUERY_INSERT
-    else:
-        query = QUERY_INSERT_SQLITE
-    import_data_from_csv(db, csv_file, query)
+    import_data_from_csv(db, csv_file)
     
 
 @cli.command() #drop_database
