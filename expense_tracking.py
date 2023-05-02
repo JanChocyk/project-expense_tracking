@@ -147,9 +147,8 @@ def read_db(db: Connector) -> list[Expense]:
     return current_expenses
 
 
-def print_raport(db: Connector) -> None:
+def print_raport(current_expenses: list[Expense]) -> None:
     """The function displays a report with all current expenses and total sum."""
-    current_expenses = read_db(db)
     total = 0
     print(f'-ID--AMOUNT--BIG?--------DESCRIPTION-------')
     for expense in current_expenses:
@@ -180,9 +179,8 @@ def import_data_from_csv(db: Connector, csv_file: str) -> None:
         raise FileNotFoundError
 
 
-def print_list(db: Connector) -> None:
+def print_list(current_expenses: list[Expense]) -> None:
     """Function print list with current expenses."""
-    current_expenses = read_db(db)
     expenses_object_list = [expense.__repr__() for expense in current_expenses]
     print(expenses_object_list)
 
@@ -218,14 +216,16 @@ def delete(db_type, id):
 @click.argument('db_type')
 def raport(db_type):
     db = init_db_connection(db_type)
-    print_raport(db)
+    current_expenses = read_db(db)
+    print_raport(current_expenses)
 
 
 @cli.command() #python_export
 @click.argument('db_type')
 def python_export(db_type):
     db = init_db_connection(db_type)
-    print_list(db)
+    current_expenses = read_db(db)
+    print_list(current_expenses)
 
 
 @cli.command() #import csv
