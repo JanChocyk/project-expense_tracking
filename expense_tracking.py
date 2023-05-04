@@ -84,8 +84,8 @@ class SQLiteConnector(Connector):
     mycursor = sqlite3.Cursor
         Create cursor object.
     """
-    def __init__(self):
-        self.connection = sqlite3.connect(FILENAME)
+    def __init__(self, db_name):
+        self.connection = sqlite3.connect(db_name)
         self.mycursor = self.connection.cursor()
 
 
@@ -120,16 +120,20 @@ def init_db_connection(choice_db: str) -> Connector:
         db = MySQLConnector or SQLiteConnector
     """
     if 'sqlite' == choice_db:
-        db = SQLiteConnector()
+        db = SQLiteConnector(FILENAME)
         db.execute_on_cursor(QUERY_CREATE_TABLE_SQLITE)
     else:
         try: 
             db = MySQLConnector(HOST, USER, PASSWORD, DATABASE)
         except mysql.connector.errors.ProgrammingError:
-            MySQLConnector.create_database(QUERY_CREATE_DB, HOST, USER, PASSWORD)
-            MySQLConnector.create_table(QUERY_CREATE_TABLE_MYSQL)
+            create_db()
             db = MySQLConnector(HOST, USER, PASSWORD, DATABASE)
     return db
+
+
+def create_db():
+    MySQLConnector.create_database(QUERY_CREATE_DB, HOST, USER, PASSWORD)
+    MySQLConnector.create_table(QUERY_CREATE_TABLE_MYSQL)
 
 
 def read_db(db: Connector) -> list[Expense]:

@@ -39,6 +39,53 @@ from unittest.mock import MagicMock
 import pytest
 from expense_tracking import *
 
+
+@pytest.fixture
+def db():
+    db = SQLiteConnector(':memory:')
+    db.execute_on_cursor(QUERY_CREATE_TABLE_SQLITE)
+    return db
+
+#  test of correct addition of the expense to database, test funcji read_db z poleceniem SELECT
+def test_save_to_db1(db):
+    Expense.save_to_db(db, 1000, 'description')
+    got = read_db(db)
+    expected = [Expense(1, 1000, 'description')]
+    assert got == expected
+
+
+# test raise ValueError by method save_to_db
+def test_save_to_db2(db):
+    with pytest.raises(ValueError):
+        Expense.save_to_db(db, -1000, 'description')    
+
+# test check 'if' in function init_db_connection
+def test_init_db_connection1():
+    choice_db = 'sqlite'
+    db = init_db_connection(choice_db)
+    got = type(db)
+    expected = SQLiteConnector
+    assert got == expected
+
+
+# test check 'if' in function init_db_connection
+def test_init_db_connection2():
+    choice_db = 'mysql'
+    db = init_db_connection(choice_db)
+    got = type(db)
+    expected = MySQLConnector
+    assert got == expected
+
+# test metody execute_on_cursor i wykonania usunięcia rekordu z bazy danych
+def test_execute_on_cursor1(db):
+    Expense.save_to_db(db, 1000, 'description')
+    db.execute_on_cursor(QUERY_DELETE, [1])
+    got = read_db(db)
+    expected = []
+    assert got == expected
+
+
+
 # @pytest.fixture
 # def setUp(self):
 #     # Wykonaj kod, który zostanie uruchomiony przed każdym testem
@@ -64,10 +111,10 @@ from expense_tracking import *
 #     """)
 
 
-def test_print_raport():
-    ...
+# def test_print_raport():
+#     ...
 
 
-def test_print_list():
-    ...
+# def test_print_list():
+#     ...
 
