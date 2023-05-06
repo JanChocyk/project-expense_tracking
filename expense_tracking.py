@@ -125,7 +125,7 @@ def init_db_connection(choice_db: str) -> Connector:
     else:
         try: 
             db = MySQLConnector(HOST, USER, PASSWORD, DATABASE)
-        except mysql.connector.errors.ProgrammingError:
+        except mysql.connector.errors.ProgrammingError: 
             create_db()
             db = MySQLConnector(HOST, USER, PASSWORD, DATABASE)
     return db
@@ -152,7 +152,7 @@ def read_db(db: Connector) -> list[Expense]:
 
 
 def print_raport(current_expenses: list[Expense]) -> None:
-    """The function displays a report with all current expenses and total sum."""
+    """The function displays a raport with all current expenses and total sum."""
     total = 0
     print(f'-ID--AMOUNT--BIG?--------DESCRIPTION-------')
     for expense in current_expenses:
@@ -238,7 +238,11 @@ def python_export(db_type):
 
 def import_csv(db_type, csv_file):
     db = init_db_connection(db_type)
-    import_data_from_csv(db, csv_file)
+    try:
+        import_data_from_csv(db, csv_file)
+    except FileNotFoundError:
+        print('File is not exist.')
+        sys.exit(1)
     
 
 @cli.command() #drop_database
