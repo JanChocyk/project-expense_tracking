@@ -43,7 +43,7 @@ from expense_tracking import *
 @pytest.fixture
 def db():
     db = SQLiteConnector(':memory:')
-    db.execute_on_cursor(QUERY_CREATE_TABLE_SQLITE)
+    db.execute_on_cursor(QUERY_CREATE_TABLE_SQLITE, table_name=TABLE_NAME)
     return db
 
 
@@ -120,7 +120,7 @@ def test_import_data_from_csv2(db):
 
 # test funkcji prnt_raport
 def test_print(capsys, list):
-    print_raport(list)
+    print_report(list)
     captured = capsys.readouterr()
     expected = """-ID--AMOUNT--BIG?--------DESCRIPTION-------\n  1      40   -      test\n  2    1001  (!)     test\nTOTAL = 1041\n"""
     assert captured.out == expected
