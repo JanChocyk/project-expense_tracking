@@ -20,10 +20,10 @@ Technical details:
 The program uses two database management systems: MySQL and SQLite. However, you can extend the program yourself with your own connectors using other systems.
 
 Exemplary program launches:
-- python expense_tracking.py configuration
-- python expense_tracking.py add 1001 "test"
-- python expense_tracking.py report
-- python expense_tracking.py import-csv "expenses.csv" 
-- python expense_tracking.py python-export
-- python expense_tracking.py delete 1
-- python expense_tracking.py drop-database
+- python expense_tracking_main.py configuration
+- python expense_tracking_main.py add 1001 "test"
+- python expense_tracking_main.py report
+- python expense_tracking_main.py import-csv "expenses.csv" 
+- python expense_tracking_main.py python-export
+- python expense_tracking_main.py delete 1
+- python expense_tracking_main.py drop-database
