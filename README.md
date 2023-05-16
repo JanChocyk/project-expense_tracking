@@ -11,26 +11,19 @@ Functionalities:
 - import of data from a CSV file - the program will import expenses saved in a CSV file to the database
 - python list export - the program will export the paython list
 
-technical details:
+Technical details:
 - the program supports SQLite and MySQL databases
 - used SQL statements
 - the program uses Object-Relational Mapping
 - the program has a text interface
 - object-oriented programming was used
+The program uses two database management systems: MySQL and SQLite. However, you can extend the program yourself with your own connectors using other systems.
 
-Example runner:
-MySQL
-- python expense_tracking.py add mysql 1001 "test"
-- python expense_tracking.py raport mysql
-- python expense_tracking.py import-csv mysql "expenses.csv" 
-- python expense_tracking.py python-export mysql
-- python expense_tracking.py delete mysql 1
-- python expense_tracking.py drop-database mysql
-
-SQLite
-- python expense_tracking.py add sqlite 1001 "test"
-- python expense_tracking.py raport sqlite
-- python expense_tracking.py import-csv sqlite "expenses.csv" 
-- python expense_tracking.py python-export sqlite
-- python expense_tracking.py delete sqlite 1
-- python expense_tracking.py drop-database sqlite
+Exemplary program launches:
+- python expense_tracking.py configuration
+- python expense_tracking.py add 1001 "test"
+- python expense_tracking.py report
+- python expense_tracking.py import-csv "expenses.csv" 
+- python expense_tracking.py python-export
+- python expense_tracking.py delete 1
+- python expense_tracking.py drop-database
