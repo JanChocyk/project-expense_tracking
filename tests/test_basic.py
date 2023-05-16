@@ -7,8 +7,9 @@ expense_tracking_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 
 print(expense_tracking_path)
 sys.path.insert(0, expense_tracking_path)
 
-from expense_tracking import expense_tracking_main
 from expense_tracking import config_db
+from expense_tracking import expense_tracking_main
+
 
 
 
