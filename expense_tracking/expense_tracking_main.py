@@ -4,7 +4,7 @@
 # 3. Lepsze rozegranie init_db_connection. ------------------------------------------------ GIT
 # 4. Inaczej usuwać bazę danych sqlite. --------------------------------------------------- GIT
 # 4.5 Rozbić projekt na dwa pliki --------------------------------------------------------- GIT
-# 4.6 Poprawić testy.
+# 4.6 Poprawić testy. --------------------------------------------------------------------- GIT
 # 5. Korekta docstringów.
 # 6. Poprawić README ---------------------------------------------------------------------- GIT
 
@@ -37,7 +37,7 @@ import sys
 
 import click
 
-from config_db import *
+from expense_tracking.config_db import *
 
 HOST = os.environ.get('HOST')
 USER = os.environ.get('USER')
