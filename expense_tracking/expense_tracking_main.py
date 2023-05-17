@@ -21,13 +21,13 @@ Functionalities:
 - importing data from a csv file
 
 Exemplary program launches:
-# python expense_tracking.py configuration
-# python expense_tracking.py add 1001 "test"
-# python expense_tracking.py report
-# python expense_tracking.py import-csv "expenses.csv" 
-# python expense_tracking.py python-export
-# python expense_tracking.py delete 1
-# python expense_tracking.py drop-database
+> python expense_tracking_main.py configuration
+> python expense_tracking_main.py add 1001 "test"
+> python expense_tracking_main.py report
+> python expense_tracking_main.py import-csv "expenses.csv" 
+> python expense_tracking_main.py python-export
+> python expense_tracking_main.py delete 1
+> python expense_tracking_main.py drop-database
 """
 
 import csv
@@ -37,6 +37,8 @@ import sys
 
 import click
 
+expense_tracking_path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, expense_tracking_path)
 from expense_tracking.config_db import *
 
 HOST = os.environ.get('HOST')
@@ -60,11 +62,12 @@ class Expense:
     amount: float
     description: str
 
+
     def __post_init__(self):
         if self.amount <= 0:
-            raise ValueError
+            raise ValueError('Amount must be greater than zero.')
         if self.description == '':
-            raise ValueError
+            raise ValueError('Description can not be empty string.')
     
 
     @classmethod
@@ -81,7 +84,7 @@ class Expense:
         db.execute_on_cursor(QUERY_INSERT, (expense.amount, expense.description))
 
 
-def init_db_connection(chosen_db) -> Connector:
+def init_db_connection(chosen_db: str) -> Connector:
     """
     Function check configuration database and returns object class MySQLConnector or object class SQLiteConnector. If database not exist, function create database and table.
 
@@ -91,13 +94,12 @@ def init_db_connection(chosen_db) -> Connector:
     Return: 
         db (Connector)
     """
-
-    if chosen_db == 'unknown':
-        raise ValueError('Missing configuration. Set configuration command: python expens_tracking.py configuration.')
-    elif chosen_db == 'mysql':
+    if chosen_db == 'mysql':
         db = MySQLConnector(HOST, USER, PASSWORD, DATABASE)
     elif chosen_db == 'sqlite':
-        db = SQLiteConnector(FILENAME)
+        db = SQLiteConnector(os.environ.get('NAME_DB'))    
+    else:
+        raise ValueError('Missing configuration. Set configuration command: python expens_tracking.py configuration.')
     return db
 
 
@@ -137,12 +139,7 @@ def print_report(current_expenses: list[Expense]) -> None:
 
 def import_data_from_csv(db: Connector, csv_file: str) -> None:
     """
-    Function read file CSV with expenses and save each expense to database.
     File CSV must be two column: AMOUNT, DESCRIPTION.
-
-    Arguments:
-    - db - it is connect to database
-    - csv_file - file name with extension CSV
     """
     with open(csv_file) as stream:
         reader = csv.DictReader(stream)
@@ -172,17 +169,12 @@ def cli():
 
 def configuration():
     choice_db = input('Which database to choose: MySQL or SQLite? Type "--m" or "--s": ')
-    if check_db_config() == 'mysql' or check_db_config() == 'sqlite':
-        print('Database already chosen. First drop current database, next set new configuration.')
-        sys.exit(1)
     if choice_db == '--m':
         MySQLConnector.prepare_database(HOST, USER, PASSWORD, DATABASE)
-        set_choice_db('mysql')
-        print('Configuration is completed. Database created.')
+        print("Database created. You need to create the 'CHOSEN_DB' environment variable with the value 'mysql'.")
     elif choice_db == '--s':
         SQLiteConnector.prepare_database(FILENAME)
-        set_choice_db('sqlite')
-        print('Configuration is completed. Database created.')
+        print("Database created. You need to create the 'CHOSEN_DB' environment variable with the value 'sqlite'.")
     else:
         print('Incorrect data has been entered.')
 
@@ -193,7 +185,7 @@ def configuration():
 
 def add(amount, description):
     try: 
-        db = init_db_connection(check_db_config())
+        db = init_db_connection(os.environ.get('CHOSEN_DB'))
     except ValueError:
         print('Missing configuration. Set configuration command: python expens_tracking.py configuration.')
         sys.exit(1)
@@ -209,7 +201,7 @@ def add(amount, description):
 
 def delete(id):
     try: 
-        db = init_db_connection(check_db_config())
+        db = init_db_connection(os.environ.get('CHOSEN_DB'))
     except ValueError:
         print('Missing configuration. Set configuration command: python expens_tracking.py configuration.')
         sys.exit(1)
@@ -219,7 +211,7 @@ def delete(id):
 @cli.command() #report
 def report():
     try: 
-        db = init_db_connection(check_db_config())
+        db = init_db_connection(os.environ.get('CHOSEN_DB'))
     except ValueError:
         print('Missing configuration. Set configuration command: python expens_tracking.py configuration.')
         sys.exit(1)
@@ -230,7 +222,7 @@ def report():
 @cli.command() #python_export
 def python_export():
     try: 
-        db = init_db_connection(check_db_config())
+        db = init_db_connection(os.environ.get('CHOSEN_DB'))
     except ValueError:
         print('Missing configuration. Set configuration command: python expens_tracking.py configuration.')
         sys.exit(1)
@@ -243,7 +235,7 @@ def python_export():
 
 def import_csv(csv_file):
     try: 
-        db = init_db_connection(check_db_config())
+        db = init_db_connection(os.environ.get('CHOSEN_DB'))
     except ValueError:
         print('Missing configuration. Set configuration command: python expens_tracking.py configuration.')
         sys.exit(1)
@@ -258,7 +250,7 @@ def import_csv(csv_file):
 
 def drop_database():
     try: 
-        db = init_db_connection(check_db_config())
+        db = init_db_connection(os.environ.get('CHOSEN_DB'))
     except ValueError:
         print('Missing configuration. Set configuration command: python expens_tracking.py configuration.')
         sys.exit(1)
