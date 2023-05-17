@@ -1,5 +1,5 @@
 # ignore ALL __pycache__
-**/__pycache__
+tests/__pycache__
 
 # ignore ALL .log files
-**/.pytest_cache
+tests/.pytest_cache
