@@ -6,9 +6,11 @@ import os
 import sys
 expense_tracking_path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, expense_tracking_path)
+# sys.path.append(expense_tracking_path)
 
 from expense_tracking import config_db
 from expense_tracking import expense_tracking_main
+
 
 
 @pytest.fixture
