@@ -1,35 +1,27 @@
 import csv
 
 import pytest
+import mysql.connector
 import os
 import sys
 expense_tracking_path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-print(expense_tracking_path)
 sys.path.insert(0, expense_tracking_path)
 
 from expense_tracking import config_db
 from expense_tracking import expense_tracking_main
 
 
-
-
 @pytest.fixture
 def db():
     return config_db.SQLiteConnector.prepare_database(':memory:')
 
-# @pytest.fixture
-# def dg_mysql():
-#     connection = mysql.connector.connect(
-#         host=HOST,
-#         user=USER,
-#         password=PASSWORD,
-#         database='',
-#         port=3307,
-#     )
-#     cur = connection.cursor()
-#     cur.execute(QUERY_CREATE_DB)
-#     cur.execute(QUERY_CREATE_TABLE_MYSQL)
-#     connection.commit()
+
+def check_mysql_db_exist():
+    try:
+        db = config_db.MySQLConnector(expense_tracking_main.HOST, expense_tracking_main.USER, expense_tracking_main.PASSWORD, expense_tracking_main.DATABASE)
+        return True
+    except mysql.connector.errors.ProgrammingError:
+        return False
 
 
 @pytest.fixture
@@ -60,31 +52,24 @@ def test_save_to_db1(db):
 def test_save_to_db2(db):
     with pytest.raises(ValueError):
         expense_tracking_main.Expense.save_to_db(db, -1000, 'description')
-        
-
-# # # test check 'if' in function init_db_connection
-# def test_init_db_connection1():
-#     chosen_db = 'sqlite'
-#     db = init_db_connection(chosen_db)
-#     got = type(db)
-#     expected = SQLiteConnector
-#     assert got == expected
 
 
 # # # test check 'if' in function init_db_connection
-# def test_init_db_connection2():
-#     chosen_db = 'mysql'
-#     db = init_db_connection(chosen_db)
-#     got = type(db)
-#     expected = MySQLConnector
-#     assert got == expected
+@pytest.mark.skipif(not check_mysql_db_exist(), reason='MySQL database does not exist')
+def test_init_db_connection1():
+    chosen_db = 'mysql'
+    db = expense_tracking_main.init_db_connection(chosen_db)
+    got = type(db)
+    expected = config_db.MySQLConnector
+    assert got == expected
 
 
 # test check 'if' in function init_db_connection
-def test_init_db_connection():
+def test_init_db_connection2():
     chosen_db = 'unknown'
     with pytest.raises(ValueError):
         expense_tracking_main.init_db_connection(chosen_db)
+
 
 # test metody execute_on_cursor i wykonania usunięcia rekordu z bazy danych
 def test_execute_on_cursor1(db):

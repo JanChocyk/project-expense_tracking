@@ -1,0 +1,5 @@
+# ignore ALL __pycache__
+**/__pycache__
+
+# ignore ALL .log files
+**/.pytest_cache
