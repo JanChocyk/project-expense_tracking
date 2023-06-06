@@ -26,8 +26,20 @@ To get started with the Expenses Management Program, follow these steps:
 1. Ensure you have Python installed on your system.
 2. Clone the project repository: git clone <repository_url>.
 3. Install the necessary dependencies by running the following command:
-`pip install -r requirements.txt`
-4. Set up the database connection by providing the required details (such as database type, credentials, etc.) in the configuration file.
-5. Run the program:
-`python expense_tracking_main.py <comand>`
-6. You can now start utilizing the program's functionalities through the text interface.
+```pip install -r requirements.txt```
+4. Set up the database connection.
+MySQL:
+- install MySQL
+- set up environment variables: HOST - name host, USER - name MySQL user, PASSWORD - your password to MySQL, DATABASE - name new database
+SQLite:
+- set up environment variables: FILENAME - name new database
+5. Run the program in setup mode:
+```python expense_tracking_main.py configuration```
+6. Run the program:
+```python expense_tracking_main.py <comand>```
+7. You can now start utilizing the program's functionalities through the text interface.
+
+## Contact
+For any inquiries or suggestions regarding the Expenses Management Program, please reach out to *janischocyk@gmail.com*.
+
+Thank you for using our Expenses Management Program! We hope it helps you effectively control your expenses.
