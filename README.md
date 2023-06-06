@@ -1,8 +1,8 @@
-Expenses Management Program
+#Expenses Management Program
 
 This program allows users to effectively control their expenses. It provides various functionalities to add, preview, and manage expenses, as well as import/export data. The program supports both SQLite and MySQL databases, utilizes SQL statements, and incorporates Object-Relational Mapping (ORM). It features a text-based interface and employs object-oriented programming principles.
 
-Functionalities
+##Functionalities
 
 1. Add Expense: Users can add expenses to the program by specifying the amount and description. The program will save the expense to the connected database.
 2. Preview Reports: Users can preview a list of expenses stored in the database. This functionality allows users to gain an overview of their spending.
@@ -11,15 +11,16 @@ Functionalities
 5. Import from CSV: The program allows users to import expenses saved in a CSV file into the database. This feature simplifies the process of transferring data from external sources.
 6. Python List Export: Users can export the expenses as a Python list. This functionality facilitates further analysis or integration with other Python programs.
 
-Technical Details
+##Technical Details
 
 * Database Support: The program supports two popular database management systems: SQLite and MySQL. It provides connectors and functionalities for seamless interaction with these databases. Additionally, you have the flexibility to extend the program by incorporating connectors for other database systems.
 * SQL Statements: SQL (Structured Query Language) statements are used to interact with the databases. The program handles essential operations such as creating tables, inserting records, querying data, and deleting entries.
 * Object-Relational Mapping (ORM): The program employs Object-Relational Mapping techniques to bridge the gap between the relational database and object-oriented programming. This approach simplifies data manipulation and allows for a more intuitive programming experience.
 * Text Interface: The program offers a text-based interface, enabling users to interact with it through a command-line environment. This interface provides a straightforward and efficient means of managing expenses.
 * Object-Oriented Programming: The program is developed using object-oriented programming principles. This approach enhances code organization, reusability, and maintainability.
+* Development: the program can be extended with new connectors for other database management systems, e.g. PostgreSQL.
 
-Getting Started
+##Getting Started
 
 To get started with the Expenses Management Program, follow these steps:
 1. Ensure you have Python installed on your system.
