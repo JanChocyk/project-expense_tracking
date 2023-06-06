@@ -11,4 +11,5 @@ Expense tracker
 ## Contact
 For any inquiries or suggestions regarding the Expenses Management Program, please reach out to *janischocyk@gmail.com*.
 
+
 Thank you for using our Expenses Management Program! We hope it helps you effectively control your expenses.
